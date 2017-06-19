@@ -42,7 +42,7 @@ def cli_parser():
 
 def get_datetimes(date, rundays=1):
     #dt = datetime.datetime.strptime(date, '%Y%m%d')
-    dt = convert_cylc_time(date)
+    dt = (convert_cylc_time(date)+datetime.timedelta(days=1))
     datetimes = {}  # empty dictionary
     datetimes['00z'] = pandas.date_range(dt, dt+datetime.timedelta(hours=11), freq='1H')
     datetimes['12z'] = pandas.date_range(dt+datetime.timedelta(hours=12),
@@ -110,8 +110,8 @@ def convert_cylc_time(string):
 
 if __name__ == "__main__":
     results = cli_parser()
-    month = convert_cylc_time(results.date).month
-    day = convert_cylc_time(results.date).day
+    month = (convert_cylc_time(results.date)+datetime.timedelta(days=1)).month
+    day = (convert_cylc_time(results.date)+datetime.timedelta(days=1)).day
     datetimes = get_datetimes(results.date)
     macc2wrf(results.MACCpath, results.wrfchemipath, results.wrfoutpath,
              datetimes, month)
