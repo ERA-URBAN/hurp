@@ -68,7 +68,6 @@ def traffic2wrfchemi(datapath, wrfchemipath, month, day):
 
   if not 'progress' in globals(): progress = list()
   if not 'dataloaded' in progress:
-      import pdb; pdb.set_trace()
       #--- load grid from existing wrfchemi file
       print('Loading grid data from %s'%infilename3)
       ncfile                   = nc.Dataset(infilename3,'r')
