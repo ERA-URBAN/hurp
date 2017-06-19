@@ -1,0 +1,122 @@
+#!/usr/bin/env python
+
+import configargparse
+import os
+import sys
+import pandas
+import datetime
+from hurp.MACC2WRF import macc2wrf
+from hurp.NEI2WRF import nei2wrf
+from hurp.Traffic2wrfchemi_v4 import traffic2wrfchemi
+import errno
+
+def cli_parser():
+    '''
+    parse command line arguments:
+    '''
+    #cfile = os.path.join(sys.prefix, 'etc', 'fm128_radar_knmi', 'radar.config')
+    cfile = ""
+    parser = configargparse.ArgumentParser(default_config_files=[cfile],
+        description='HURP run script wrf chem')
+    parser.add('-c', '--my-config', required=False, is_config_file=True,
+               help='config file path')
+    parser.add('--NEIpath', required=True,
+               help='Directory containing NEI files', env_var='NEIpath')
+    parser.add('--MACCpath', required=True,
+               help='Directory containing MACC files', env_var='MACCpath')
+    parser.add('--trafficpath', required=True,
+               help='Directory containing traffic files', env_var='trafficpath')
+    parser.add('--wrfchemipath', help='Directory containing wrfchemi files',
+               env_var='wrfchemipath', required=True)
+    parser.add('--wrfoutpath',
+               help='Directory containing wrfout files with domain information',
+               env_var='wrfoutpath', required=False)
+    parser.add('--outputdir', help='Target output directory',
+               env_var='outputdir', required=True)
+    parser.add('--rundays', default=1, type=int,
+               help='number of WRF rundays')
+    parser.add('date', metavar='datetime', type=str,
+               help='Datetime string "%%Y%%m%%d"')
+    results = parser.parse_args()
+    return results
+
+def get_datetimes(date, rundays=1):
+    #dt = datetime.datetime.strptime(date, '%Y%m%d')
+    dt = convert_cylc_time(date)
+    datetimes = {}  # empty dictionary
+    datetimes['00z'] = pandas.date_range(dt, dt+datetime.timedelta(hours=11), freq='1H')
+    datetimes['12z'] = pandas.date_range(dt+datetime.timedelta(hours=12),
+                                         dt+datetime.timedelta(hours=23), freq='1H')
+    return datetimes
+
+def symlink_force(target, link_name):
+  ''' 
+  force overwrite symlink
+  '''
+  try:
+    os.symlink(target, link_name)
+  except OSError, e:
+    if e.errno == errno.EEXIST:
+      os.remove(link_name)
+      os.symlink(target, link_name)
+    else:
+      raise e
+
+def link_files(wrfchemipath, outputdir, month, day):
+  '''
+  symlink files from wrfchemipath to outputdir
+  '''
+  dows             = ('Mon','Tue','Wed','Thu','Fri','Sat','Sun')
+  moys             = ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep',
+                      'Oct','Nov','Dec')
+  date = moys[month-1] + '_' + dows[day]
+  # symlink domain 1
+  symlink_force((os.path.join(wrfchemipath, 'MACC_wrfchemi_00z_d01_' +
+                             date)), os.path.join(outputdir,
+                                                  'wrfchemi_00z_d01'))
+  symlink_force((os.path.join(wrfchemipath, 'MACC_wrfchemi_12z_d01_' +
+                             date)), os.path.join(outputdir,
+                                                  'wrfchemi_12z_d01'))
+  # symlink domain 2
+  symlink_force((os.path.join(wrfchemipath, 'MACC_wrfchemi_00z_d02_' +
+                             date)), os.path.join(outputdir,
+                                                  'wrfchemi_00z_d02'))
+  symlink_force((os.path.join(wrfchemipath, 'MACC_wrfchemi_12z_d02_' +
+                             date)), os.path.join(outputdir,
+                                                  'wrfchemi_12z_d02'))
+  # symlink domain 3
+  symlink_force((os.path.join(wrfchemipath, 'NEI_wrfchemi_00z_d03_' +
+                             date)), os.path.join(outputdir,
+                                                  'wrfchemi_00z_d03'))
+  symlink_force((os.path.join(wrfchemipath, 'NEI_wrfchemi_12z_d03_' +
+                             date)), os.path.join(outputdir,
+                                                  'wrfchemi_12z_d03'))
+
+  # symlink domain 4
+  symlink_force((os.path.join(wrfchemipath, 'NEI_Traffic_wrfchemi_00z_d04_' +
+                             date)), os.path.join(outputdir,
+                                                  'wrfchemi_00z_d04'))
+  symlink_force((os.path.join(wrfchemipath, 'NEI_Traffic_wrfchemi_12z_d04_' +
+                             date)), os.path.join(outputdir,
+                                                  'wrfchemi_12z_d04'))
+
+def convert_cylc_time(string):
+    import datetime
+    import dateutil.parser
+    try:
+      return datetime.datetime.strptime(string, '%Y%m%dT%H00+01').replace(tzinfo=None)
+    except ValueError:
+      return dateutil.parser.parse(string).replace(tzinfo=None)
+
+if __name__ == "__main__":
+    results = cli_parser()
+    month = convert_cylc_time(results.date).month
+    day = convert_cylc_time(results.date).day
+    datetimes = get_datetimes(results.date)
+    macc2wrf(results.MACCpath, results.wrfchemipath, results.wrfoutpath,
+             datetimes, month)
+    nei2wrf(results.NEIpath, results.wrfchemipath, results.wrfoutpath,
+            datetimes, month)
+    traffic2wrfchemi(results.trafficpath, results.wrfchemipath,
+                     month, day)
+    link_files(results.wrfchemipath, results.outputdir, month, day)
