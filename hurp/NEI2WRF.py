@@ -42,7 +42,7 @@ def nei2wrf(NEIpath, wrfchemipath, wrfoutpath, Times, month):
     zTimes           = ['00z','12z']
     tracers          = ['NOx','PM10','CO2']
     selectedtracers  = tracers[:2]
-    dows             = ('Sun', 'Mon','Tue','Wed','Thu','Fri','Sat')
+    dows             = ('Mon','Tue','Wed','Thu','Fri','Sat','Sun')
     moys             = ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec')
 
                                     # in NER output file                                 # In Ingrid Super's file
