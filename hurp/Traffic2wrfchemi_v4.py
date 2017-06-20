@@ -60,7 +60,7 @@ def traffic2wrfchemi(datapath, wrfchemipath, month, day):
 
   # define months/days of week
   moys             = ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec')
-  dows             = ('Mon','Tue','Wed','Thu','Fri','Sat','Sun')
+  dows             = ('Sun', 'Mon','Tue','Wed','Thu','Fri','Sat')
 
   infilename1                  = '%s/resulting_intensities_onGrid_binnenstad.csv'%datapath
   infilename2                  = '%s/resulting_intensities_onGrid_snelweg.csv'%datapath

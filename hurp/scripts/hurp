@@ -66,7 +66,7 @@ def link_files(wrfchemipath, outputdir, month, day):
   '''
   symlink files from wrfchemipath to outputdir
   '''
-  dows             = ('Mon','Tue','Wed','Thu','Fri','Sat','Sun')
+  dows             = ('Sun', 'Mon','Tue','Wed','Thu','Fri','Sat')
   moys             = ('Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep',
                       'Oct','Nov','Dec')
   date = moys[month-1] + '_' + dows[day]
@@ -111,7 +111,7 @@ def convert_cylc_time(string):
 if __name__ == "__main__":
     results = cli_parser()
     month = (convert_cylc_time(results.date)+datetime.timedelta(days=1)).month
-    day = (convert_cylc_time(results.date)+datetime.timedelta(days=1)).day
+    day = (convert_cylc_time(results.date)+datetime.timedelta(days=1)).weekday()
     datetimes = get_datetimes(results.date)
     macc2wrf(results.MACCpath, results.wrfchemipath, results.wrfoutpath,
              datetimes, month)
